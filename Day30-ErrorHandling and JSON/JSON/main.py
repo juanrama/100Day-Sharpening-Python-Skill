@@ -2,6 +2,7 @@ from tkinter import *
 from tkinter import messagebox
 from random import choice, randint, shuffle
 import pyperclip
+import json
 # ---------------------------- PASSWORD GENERATOR ------------------------------- #
 def generate_password():
     letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
@@ -27,17 +28,46 @@ def save():
     web = web_form.get()
     email = email_form.get()
     password = pass_form.get()
+    new_dict = {
+        web.lower() : {
+            "email" : email.lower(),
+            "password" : password.lower()
+        }
+    }
     
     if len(web) <= 0 or len(email) <= 0 or len(password) <= 0:
         messagebox.showinfo(title="Warning", message="Your data is incomplete")
     else:
-        is_ok = messagebox.askokcancel(title=web, message=f"Email : {email}\nPassword : {password}\nIs it okay?")
-        if is_ok:
-            with open("data.txt", "a") as data:
-                data.writelines(f'{web_form.get()} | {email_form.get()} | {pass_form.get()}\n')
+        try:
+            with open("data.json", "r") as data_file:
+                data = json.load(data_file)
+        except FileNotFoundError:
+            with open("data.json", "w") as data_file:
+                json.dump(new_dict, data_file, indent=4)
+        else:
+            data.update(new_dict)
+            with open("data.json", "w") as data_file:
+                json.dump(data, data_file, indent=4)
+        finally:
             web_form.delete(0,END)
             email_form.delete(0,END)
             pass_form.delete(0,END)
+# ---------------------------- FIND PASSWORD ------------------------------- #
+def find_password():
+    web = web_form.get()
+    try:
+        with open("data.json", "r") as data_file:
+            data = json.load(data_file)
+    except FileNotFoundError:
+        messagebox.showinfo(title="Not Found", message="Data is not found")
+    else:
+        try:
+            mail = data[web]["email"]
+            this_pass = data[web]["password"]
+        except KeyError:
+            messagebox.showinfo(title="Not Found", message="No email found")
+        else:
+            messagebox.showinfo(title=f"{web}", message=f"Email : {mail}\nPassword : {this_pass}")
 
 # ---------------------------- UI SETUP ------------------------------- #
 windows = Tk()
@@ -60,17 +90,20 @@ pass_label = Label(text="Password:", font=("Arial", 10, "bold"))
 pass_label.grid(column=0, row=3)
 
 #Form
-web_form = Entry(width=52)
-web_form.grid(column=1, row=1, columnspan=2)
+web_form = Entry(width=34)
+web_form.grid(column=1, row=1)
 web_form.focus()
-email_form = Entry(width=52)
+email_form = Entry(width=53)
 email_form.grid(column=1, row=2, columnspan=2)
 pass_form = Entry(width=34)
 pass_form.grid(column=1, row=3)
 
 #Button
-gen_pass = Button(text="Generate Password", command=generate_password)
+gen_pass = Button(text="Generate Password", command=generate_password, width=14)
 gen_pass.grid(column=2, row=3)
+
+search_button = Button(text="Search", width=14, command=find_password)
+search_button.grid(column=2, row=1)
 
 add_button = Button(text="Add", width=44, command=save)
 add_button.grid(column=1, row=4, columnspan=2)

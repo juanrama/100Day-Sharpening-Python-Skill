@@ -26,7 +26,7 @@ def reset():
 def start_timer():
     global resps
     if resps % 2 != 0:
-        label.config(text="Work")
+        label.config(text="Work", fg=GREEN)
         count_down(20)
         resps += 1
     elif resps % 2 == 0 and resps != 8:
